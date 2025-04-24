@@ -58,6 +58,7 @@ import { UserService } from 'src/user/user.service';
         @Request() req
         ) {
             const user: User | undefined = req.user;
+            console.log(req.user); // req.user, JwtAuthGuard tarafından eklenir
         this.logger.log(`Request received to list threads for category: ${categoryIdOrSlug}`);
         return this.threadsService.findAllByCategory(categoryIdOrSlug, queryDto,user);
     }

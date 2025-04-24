@@ -313,6 +313,7 @@ this.checkCategoryViewPermission(thread.category, user);
 
     private checkCategoryViewPermission(category: Category, user?: User | null): void {
       const requiredRole = category.minViewRole;
+      console.log(user);
       const userRole = user ? user.role : UserRole.GUEST; // Kullanıcı yoksa misafir
   
       // Rol hiyerarşisi (düşük sayı daha yetkili)
