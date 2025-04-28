@@ -20,7 +20,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd /var/www/cinnasium-api
-            git pull origin main
+            git pull origin master
             npm install
             npm run build
             pm2 restart cinnasium-api || pm2 start dist/main.js --name cinnasium-api
