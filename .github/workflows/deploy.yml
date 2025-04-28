@@ -19,8 +19,8 @@ jobs:
           username: ubuntu
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cd /var/www/cinnasium-api
+            cd /var/www/cinnasium
             git pull origin master
             npm install
             npm run build
-            pm2 restart cinnasium-api || pm2 start dist/main.js --name cinnasium-api
+            pm2 restart cinnasium || pm2 start dist/main.js --name cinnasium
