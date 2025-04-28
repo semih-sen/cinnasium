@@ -28,4 +28,4 @@ import { MailModule } from 'src/mail/mail.module';
       inject: [ConfigService], // Factory'ye ConfigService'i inject et
     }),],
 })
-export class AuthModule {}
+export class AuthModule {} 

@@ -17,6 +17,7 @@ import { ConfigModule } from '@nestjs/config';
 import { CategoryModule } from './category/category.module';
 import { ThreadModule } from './thread/thread.module';
 import { PostModule } from './post/post.module';
+import { ProfileImageModule } from './profile-image/profile-image.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { PostModule } from './post/post.module';
     CategoryModule,
     ThreadModule,
     PostModule,
+    ProfileImageModule,
   ],
   controllers: [AppController],
   providers: [AppService, VerificationService, CachingService, MailService],

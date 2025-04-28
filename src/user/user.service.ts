@@ -8,6 +8,9 @@ import { VerificationService } from 'src/verification/verification.service';
 
 @Injectable()
 export class UserService {
+  setProfileImage(id: any, newFilename: string) {
+    this.update(id, {avatarUrl:newFilename})
+  }
     // Kullanıcı ile ilgili işlemler burada tanımlanacak
     // Örneğin: createUser, findUser, updateUser, deleteUser gibi metodlar
     // TypeORM kullanarak veritabanı işlemleri gerçekleştirebilirsiniz.

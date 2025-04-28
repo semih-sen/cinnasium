@@ -72,7 +72,7 @@ export class VerificationService {
     const key = `${this.verificationTokenPrefix}${token}`;
     const key2= `${this.verificationTokenPrefix2}${userId}`;
     const ttlMilliseconds = this.tokenTtlSeconds * 1000;
-
+ 
     try {
       // Redis'e token'ı anahtar, kullanıcı ID'sini değer olarak kaydet
       await this.cacheService.set(key, userId, ttlMilliseconds);

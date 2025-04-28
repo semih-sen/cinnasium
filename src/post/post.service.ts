@@ -14,6 +14,7 @@ import { CommentForCreateDto } from './dtos/comment_for_create.dto';
 import { FindCommentsQueryDto } from './dtos/find_comments_query.dto';
 import { CategoryService } from '../category/category.service';
 import { Thread } from '../thread/entities/thread.entity'; // Thread tipini almak için
+import { paginate, Pagination } from 'nestjs-typeorm-paginate';
 
 @Injectable()
 export class PostService {
@@ -102,30 +103,23 @@ export class PostService {
       }
   }
 
-  async findAllByThread(threadId: string, queryDto: FindPostsQueryDto): Promise<{ data: Post[], total: number, page: number, limit: number }> {
-      this.logger.log(`Workspaceing posts for thread: ${threadId}, page: ${queryDto.page}, limit: ${queryDto.limit}`);
-      // Konu var mı kontrolü eklenebilir (opsiyonel)
-      // await this.threadsService.findOne(threadId);
-
-      const { page = 1, limit = 20 } = queryDto;
-      const skip = (page - 1) * limit;
-
-      const [posts, total] = await this.postRepository.findAndCount({
-          where: { threadId: threadId },
-          relations: ['author', 'votes', 'comments'], // Yazar, oylar ve yorumlar (sayısı için)
-          order: {
-              createdAt: 'ASC', // Mesajları eskiden yeniye sırala
-          },
-          skip: skip,
-          take: limit,
-      });
-
-       this.logger.log(`Found ${posts.length} posts out of ${total} for thread ${threadId}`);
-      // Dikkat: 'votes' ve 'comments' tüm nesneleri yükler, sadece sayısını istiyorsak bu verimsiz olabilir.
-      // Daha iyisi: Sorguda COUNT kullanmak veya Post entity'sindeki denormalize sayaçları kullanmak.
-      // Şimdilik ilişkileri yükleyelim.
-
-      return { data: posts, total, page, limit };
+  async findAllByThread(
+    threadId: string,
+    queryDto: FindPostsQueryDto
+  ): Promise<Pagination<Post>> {
+    this.logger.log(`Fetching posts for thread: ${threadId}, page: ${queryDto.page}, limit: ${queryDto.limit}`);
+  
+    const queryBuilder = this.postRepository.createQueryBuilder('post')
+      .where('post.threadId = :threadId', { threadId })
+      .leftJoinAndSelect('post.author', 'author')
+      .leftJoinAndSelect('post.votes', 'votes')
+      .leftJoinAndSelect('post.comments', 'comments')
+      .orderBy('post.createdAt', 'ASC');
+  
+    return paginate<Post>(queryBuilder, {
+      page: queryDto.page || 1,
+      limit: queryDto.limit || 20,
+    });
   }
 
   async findOne(id: string): Promise<Post> {

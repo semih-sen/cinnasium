@@ -12,7 +12,8 @@ import {
     HttpCode,
     HttpStatus,
     ParseUUIDPipe,
-    Logger
+    Logger,
+    UnauthorizedException
 } from '@nestjs/common';
 import { PostService } from './post.service';
 import { PostForCreateDto } from './dtos/post_for_create.dto';
@@ -24,24 +25,31 @@ import { FindCommentsQueryDto } from './dtos/find_comments_query.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Public } from '../auth/decorators/public.decorator';
 import { User } from '../user/entities/user.entity';
+import { UserService } from 'src/user/user.service';
 
 // Post işlemleri genellikle thread veya post ID'si üzerinden yapılır
 @Controller() // Ana path yok, metodlardaki path'ler kullanılacak
 export class PostController {
     private readonly logger = new Logger(PostController.name);
 
-    constructor(private readonly postsService: PostService) {}
+    constructor(private readonly postsService: PostService,
+        private readonly userService:UserService
+    ) {}
 
     // Bir konuya yeni cevap ekleme
     @Post('threads/:threadId/posts') // POST /threads/{threadId}/posts
-    @UseGuards(JwtAuthGuard)
+   
     @HttpCode(HttpStatus.CREATED)
-    createReply(
+    async createReply(
         @Param('threadId', ParseUUIDPipe) threadId: string,
         @Body() createPostDto: PostForCreateDto,
         @Request() req,
     ) {
-        const user: User = req.user;
+        const _user = req.user;
+        const user= await this.userService.findById(_user.userId)
+        if(!user){
+            throw new UnauthorizedException()
+        }
         this.logger.log(`User ${user.username} requesting to create reply in thread ${threadId}`);
         return this.postsService.createReply(createPostDto, threadId, user);
     }
