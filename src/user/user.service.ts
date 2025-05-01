@@ -5,70 +5,89 @@ import { Repository } from 'typeorm';
 import { UserForRegisterDto } from '../auth/dtos/user_for_register.dto';
 import { UserForCreateDto } from './entities/user_for_create.dto';
 import { VerificationService } from 'src/verification/verification.service';
+import { FindUsersQueryDto } from './dtos/find_users_query.dto';
+import { paginate, Pagination } from 'nestjs-typeorm-paginate';
 
 @Injectable()
 export class UserService {
   setProfileImage(id: any, newFilename: string) {
-    this.update(id, {avatarUrl:newFilename})
+    this.update(id, { avatarUrl: newFilename });
   }
-    // Kullanıcı ile ilgili işlemler burada tanımlanacak
-    // Örneğin: createUser, findUser, updateUser, deleteUser gibi metodlar
-    // TypeORM kullanarak veritabanı işlemleri gerçekleştirebilirsiniz.
-    private readonly logger = new Logger(UserService.name);
-    constructor(
-        @InjectRepository(User)
-        private readonly userRepository: Repository<User>,
-        private readonly verificationService: VerificationService,
-         // Doğrulama servisi
-      ) {}
+  // Kullanıcı ile ilgili işlemler burada tanımlanacak
+  // Örneğin: createUser, findUser, updateUser, deleteUser gibi metodlar
+  // TypeORM kullanarak veritabanı işlemleri gerçekleştirebilirsiniz.
+  private readonly logger = new Logger(UserService.name);
+  constructor(
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+    private readonly verificationService: VerificationService,
+    // Doğrulama servisi
+  ) {}
 
-
-    async createUser(user:UserForCreateDto){
-        let newUser =  this.userRepository.create(user);
-        let u =  (await this.userRepository.save(newUser));
-        try {
-          await this.verificationService.createVerificationToken(u.id);
-          // Email gönderme burada tetiklenmiş olacak (VerificationService içinde)
-       } catch (error) {
-          // Token oluşturma/email gönderme hatasını logla ama kullanıcı oluşturmayı geri alma
-          this.logger.error(`Failed to initiate verification for user ${u.id}`, error);
-       }
-       return u;
+  async createUser(user: UserForCreateDto) {
+    let newUser = this.userRepository.create(user);
+    let u = await this.userRepository.save(newUser);
+    try {
+      await this.verificationService.createVerificationToken(u.id);
+      // Email gönderme burada tetiklenmiş olacak (VerificationService içinde)
+    } catch (error) {
+      // Token oluşturma/email gönderme hatasını logla ama kullanıcı oluşturmayı geri alma
+      this.logger.error(
+        `Failed to initiate verification for user ${u.id}`,
+        error,
+      );
     }
-  
-      async findById(id: string): Promise<User | null> {
-        return this.userRepository.findOneBy({ id });
-      }
-   
-    async findByEmail(email: string): Promise<User | null> {
-        return this.userRepository.findOneBy({ email });
-      }
-      async findByUsername(username: string): Promise<User | null> {
-        let user = await this.userRepository.findOneBy({ username });
-        console.log(user?.passwordHash);
-        return user;
-      }
-      async findByUsernameOrEmail(usernameOrEmail: string): Promise<User | null> {
-        if (usernameOrEmail.includes('@')) {
-          return this.findByEmail(usernameOrEmail );
-        } else {
-          return this.findByUsername(usernameOrEmail );
-        }
-      }
+    return u;
+  }
 
-      async findPasswordHashByUsernameOrEmail(usernameOrEmail: string): Promise<string | null> {
+  async findById(id: string): Promise<User | null> {
+    return this.userRepository.findOneBy({ id });
+  }
 
-        if(usernameOrEmail.includes('@')) {
-          const user = await this.userRepository.findOne({ where: { email: usernameOrEmail }, select: ['passwordHash'] });
-          return user ? user.passwordHash : null;
-        }
-        const user = await this.userRepository.findOne({ where: { username: usernameOrEmail }, select: ['passwordHash'] });
-        return user ? user.passwordHash : null;
+  async findByEmail(email: string): Promise<User | null> {
+    return this.userRepository.findOneBy({ email });
+  }
+  async findByUsername(username: string): Promise<User | null> {
+    let user = await this.userRepository.findOneBy({ username });
+    console.log(user?.passwordHash);
+    return user;
+  }
+  async findByUsernameOrEmail(usernameOrEmail: string): Promise<User | null> {
+    if (usernameOrEmail.includes('@')) {
+      return this.findByEmail(usernameOrEmail);
+    } else {
+      return this.findByUsername(usernameOrEmail);
+    }
+  }
 
-      }
+  async findPasswordHashByUsernameOrEmail(
+    usernameOrEmail: string,
+  ): Promise<string | null> {
+    if (usernameOrEmail.includes('@')) {
+      const user = await this.userRepository.findOne({
+        where: { email: usernameOrEmail },
+        select: ['passwordHash'],
+      });
+      return user ? user.passwordHash : null;
+    }
+    const user = await this.userRepository.findOne({
+      where: { username: usernameOrEmail },
+      select: ['passwordHash'],
+    });
+    return user ? user.passwordHash : null;
+  }
 
+  async getList(queryDto: FindUsersQueryDto): Promise<Pagination<User>> {
+    const query = this.userRepository
+      .createQueryBuilder('user')
+      .orderBy('user.username', 'ASC');
+    return paginate<User>(query, {
+      limit: queryDto.limit || 1,
+      page: queryDto.page || 20,
+    });
+  }
 
-      /**
+  /**
    * Belirtilen ID'ye sahip kullanıcıyı verilen verilerle günceller.
    * @param id Güncellenecek kullanıcının ID'si
    * @param updateUserDto Güncellenecek alanları içeren Partial<User> nesnesi
@@ -101,10 +120,10 @@ export class UserService {
       const { passwordHash, ...result } = updatedUser;
       return result as User;
     } catch (error) {
-        this.logger.error(`Failed to update user with ID: ${id}`, error);
-        // Veritabanı hatası veya başka bir sorun olabilir
-        // Burada daha spesifik hata yönetimi yapılabilir (örn: duplicate key hatası)
-        throw error; // Hatanın yukarıya fırlatılması
+      this.logger.error(`Failed to update user with ID: ${id}`, error);
+      // Veritabanı hatası veya başka bir sorun olabilir
+      // Burada daha spesifik hata yönetimi yapılabilir (örn: duplicate key hatası)
+      throw error; // Hatanın yukarıya fırlatılması
     }
   }
 }
