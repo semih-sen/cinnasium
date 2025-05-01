@@ -20,20 +20,27 @@ import { FindThreadsQueryDto } from './dtos/find_threads_query.dto';
 import { Category } from '../category/entities/category.entity';
 import { Post } from 'src/post/entities/post.entity';
 import { paginate, Pagination } from 'nestjs-typeorm-paginate';
+import { ConfigService } from '@nestjs/config';
+import { CachingService } from 'src/caching/caching.service';
 
 @Injectable()
 export class ThreadService {
   private readonly logger = new Logger(ThreadService.name);
-
+  private readonly viewCountTtlSeconds: number;
+  private readonly viewCountKeyPrefix = 'viewed_thread:';
   constructor(
     @InjectRepository(Thread)
     private readonly threadRepository: Repository<Thread>,
     private readonly categoriesService: CategoryService,
+    private readonly cacheService: CachingService,
+    private readonly configService: ConfigService,
     private readonly usersService: UserService, // Kullanıcı bilgilerini almak için
     // PostsService'e forwardRef ile inject ediyoruz (çünkü PostsModule de ThreadsService'i import edebilir)
     @Inject(forwardRef(() => PostService))
     private readonly postsService: PostService,
-  ) {}
+  ) {
+    this.viewCountTtlSeconds = this.configService.get<number>('THREAD_VIEW_UNIQUENESS_TTL_SECONDS', 86400); // Default 24 saat
+  }
 
   async create(
     createThreadDto: ThreadForCreateDto,
@@ -141,7 +148,7 @@ export class ThreadService {
     });
   }
 
-  async findOne(idOrSlug: string, user?: User | null): Promise<Thread> {
+  async findOne(idOrSlug: string, user?: User | null,ipAddress?: string): Promise<Thread> {
     this.logger.log(`Finding thread by id or slug: ${idOrSlug}`);
     let thread: Thread | null = null;
     const isUUID =
@@ -183,14 +190,40 @@ export class ThreadService {
     this.checkCategoryViewPermission(thread.category, user);
     // Görüntülenme sayısını artır (Basit yöntem, race condition olabilir)
     // Daha iyisi: Redis gibi bir yerde sayıp periyodik olarak DB'ye yazmak veya message queue kullanmak.
-    this.threadRepository
-      .increment({ id: thread.id }, 'viewCount', 1)
-      .catch((err) => {
-        this.logger.error(
-          `Failed to increment view count for thread ${thread.id}`,
-          err,
-        );
-      }); // Arka planda çalışsın, hatayı loglasın ama akışı durdurmasın.
+    //planda çalışsın, hatayı loglasın ama akışı durdurmasın.
+
+
+    if (ipAddress) { // IP adresi varsa işlem yap
+      const viewKey = `${this.viewCountKeyPrefix}${thread.id}:${ipAddress}`;
+      try {
+          const alreadyViewed = await this.cacheService.get(viewKey);
+
+          if (!alreadyViewed) { // Bu IP bu konuyu daha önce (TTL içinde) görmemiş
+              this.logger.debug(`Unique view detected for thread ${thread.id} from IP ${ipAddress}. Incrementing count.`);
+              // Sayacı artır (arka planda, hatayı sadece logla)
+              this.threadRepository.increment({ id: thread.id }, 'viewCount', 1).catch(err => {
+                  this.logger.error(`Failed to increment view count for thread ${thread.id}`, err);
+              });
+              // Bu IP'nin gördüğünü işaretle ve TTL ata
+              const ttlMilliseconds = this.viewCountTtlSeconds * 1000;
+              await this.cacheService.set(viewKey, 1, ttlMilliseconds); // Değer önemli değil, varlığı yeterli
+          } else {
+               this.logger.debug(`IP ${ipAddress} has already viewed thread ${thread.id} within TTL. Not incrementing count.`);
+          }
+      } catch(error) {
+           this.logger.error(`Cache error during view count check for thread ${thread.id} and IP ${ipAddress}`, error);
+           // Cache hatasında sayacı artırmamak daha güvenli olabilir.
+      }
+  } else {
+       this.logger.warn(`No IP address provided for view count tracking on thread ${thread.id}`);
+       // IP yoksa eski usul artırma yapılabilir veya hiç artırılmaz. Şimdilik artırmayalım.
+       /*
+       this.threadRepository.increment({ id: thread.id }, 'viewCount', 1).catch(err => {
+          this.logger.error(`Failed to increment view count for thread ${thread.id}`, err);
+       });
+       */
+  }
+
 
     return thread;
   }

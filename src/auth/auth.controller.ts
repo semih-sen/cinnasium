@@ -7,6 +7,7 @@ import { Public } from './decorators/public.decorator';
 import { AuthGuard } from '@nestjs/passport';
 import { UserService } from 'src/user/user.service';
 import { MailService } from 'src/mail/mail.service';
+import { RegistrationGuard } from './guards/registration.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -19,6 +20,7 @@ export class AuthController {
   ) {}
 
   @Public()
+  @UseGuards(RegistrationGuard)
   @Post('register') // POST /auth/register
   async register(@Body() registerDto: UserForRegisterDto) {
     return await this.authService.register(registerDto);

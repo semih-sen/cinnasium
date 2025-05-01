@@ -12,16 +12,18 @@ export class MailService {
   async sendUserConfirmation(email: string, name: string, token: string) {
     const url = `${this.configService.get('APP_URL')}/auth/email_verify?token=${token}`;
 
-    await this.mailerService.sendMail({
-      to: email,
-      from: `"Teyyidkâr" <${this.configService.get<string>('MAIL_FROM')}>`,
-      subject: 'Welcome to Our App! Confirm Your Email',
-      template: './email_verify', // Template adı (confirmation.hbs)
-      context: {
-        name,
-        url,
-      },
-    });
+    try {
+      await this.mailerService.sendMail({
+        to: email,
+        from: `"Teyyidkâr" <${this.configService.get<string>('MAIL_FROM')}>`,
+        subject: 'Kervanımıza Hoş Sâdâ Verdiniz',
+        template: './email_verify', // Template adı (confirmation.hbs)
+        context: {
+          name,
+          url,
+        },
+      });
+    } catch (e) {}
   }
 
   async sendPasswordReset(email: string, name: string, token: string) {
@@ -38,11 +40,11 @@ export class MailService {
     });
   }
 
-  async testistanbul(to:string) {
+  async testistanbul(to: string) {
     await this.mailerService.sendMail({
       to: to,
       subject: 'Ehli Sır: Bağlantı Testi ve Zihin Yoklaması',
-      html:`
+      html: `
       <!DOCTYPE html>
 <html>
   <body style="background-color:#0e0e0e; color:#e0e0e0; font-family:'Georgia', serif; padding: 30px;">
@@ -69,13 +71,16 @@ export class MailService {
   </body>
 </html>
       
-      `
-      
-      
-    })
+      `,
+    });
   }
 
-  async sendCustomEmail(to: string, subject: string, template: string, context: any) {
+  async sendCustomEmail(
+    to: string,
+    subject: string,
+    template: string,
+    context: any,
+  ) {
     await this.mailerService.sendMail({
       to,
       subject,

@@ -68,8 +68,9 @@ import { UserService } from 'src/user/user.service';
     @Get(':idOrSlug') // GET /threads/konu-slug veya /threads/uuid
     findOne(@Param('idOrSlug') idOrSlug: string, @Request() req) {
         const user: User | undefined = req.user;
+        const ipAddress: string | undefined = req.ip;
         this.logger.log(`Request received to find thread: ${idOrSlug}`);
-        return this.threadsService.findOne(idOrSlug, user);
+        return this.threadsService.findOne(idOrSlug, user,ipAddress);
     }
   
     // Konu güncelleme (Yazar veya Admin/Mod)
