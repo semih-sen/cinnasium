@@ -5,9 +5,12 @@ import { ValidationPipe } from '@nestjs/common';
 import { ExpressAdapter } from '@nestjs/platform-express';
 
 async function bootstrap() {
-  const adapter = new ExpressAdapter();
-  adapter.set("trust-proxy",1);
-  const app = await NestFactory.create(AppModule,adapter);
+  
+  
+  const app = await NestFactory.create(AppModule);
+  const expressApp = app.getHttpAdapter().getInstance()
+
+  expressApp.set("trust proxy",true)
   app.enableCors()
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
   const reflector = app.get(Reflector); // Reflector'u al (metadata okumak için)
