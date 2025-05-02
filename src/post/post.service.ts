@@ -442,7 +442,7 @@ export class PostService {
       .createQueryBuilder('comment')
       .where('comment.postId = :postId', { postId })
       .leftJoinAndSelect('comment.author', 'author')
-      .orderBy('createdAt', 'ASC');
+      .orderBy('comment.createdAt', 'ASC');
     /* const { page = 1, limit = 10 } = queryDto;
        const skip = (page - 1) * limit;
 
