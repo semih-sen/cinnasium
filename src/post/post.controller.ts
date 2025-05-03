@@ -75,13 +75,16 @@ export class PostController {
 
     // Mesaj güncelleme
     @Patch('posts/:id') // PATCH /posts/{postId}
-    @UseGuards(JwtAuthGuard)
-    update(
+    async update(
         @Param('id', ParseUUIDPipe) id: string,
         @Body() updatePostDto: PostForUpdateDto,
         @Request() req,
     ) {
-        const user: User = req.user;
+        const _user = req.user;
+        const user= await this.userService.findById(_user.userId)
+        if(!user){
+            throw new UnauthorizedException()
+        }
         this.logger.log(`User ${user.username} requesting to update post ID: ${id}`);
         // Yetki kontrolü serviste
         return this.postsService.update(id, updatePostDto, user);
@@ -89,10 +92,14 @@ export class PostController {
 
     // Mesaj silme
     @Delete('posts/:id') // DELETE /posts/{postId}
-    @UseGuards(JwtAuthGuard)
+    
     @HttpCode(HttpStatus.NO_CONTENT)
-    remove(@Param('id', ParseUUIDPipe) id: string, @Request() req) {
-        const user: User = req.user;
+   async remove(@Param('id', ParseUUIDPipe) id: string, @Request() req) {
+        const _user = req.user;
+        const user= await this.userService.findById(_user.userId)
+        if(!user){
+            throw new UnauthorizedException()
+        }
         this.logger.log(`User ${user.username} requesting to remove post ID: ${id}`);
         // Yetki kontrolü serviste
         return this.postsService.remove(id, user);
@@ -102,12 +109,16 @@ export class PostController {
     @Post('posts/:id/vote') // POST /posts/{postId}/vote
     @UseGuards(JwtAuthGuard)
     @HttpCode(HttpStatus.OK) // Başarılı oylama sonrası 200 OK
-    vote(
+   async vote(
         @Param('id', ParseUUIDPipe) postId: string,
         @Body() voteDto: VoteDto,
         @Request() req,
     ) {
-        const user: User = req.user;
+        const _user = req.user;
+        const user= await this.userService.findById(_user.userId)
+        if(!user){
+            throw new UnauthorizedException()
+        }
         this.logger.log(`User ${user.username} requesting to vote on post ID: ${postId} with value ${voteDto.value}`);
         return this.postsService.vote(postId, user, voteDto.value);
     }
@@ -116,12 +127,16 @@ export class PostController {
     @Post('posts/:id/comments') // POST /posts/{postId}/comments
     @UseGuards(JwtAuthGuard)
     @HttpCode(HttpStatus.CREATED)
-    addComment(
+   async  addComment(
         @Param('id', ParseUUIDPipe) postId: string,
         @Body() createCommentDto: CommentForCreateDto,
         @Request() req,
     ) {
-        const user: User = req.user;
+        const _user = req.user;
+        const user= await this.userService.findById(_user.userId)
+        if(!user){
+            throw new UnauthorizedException()
+        }
         this.logger.log(`User ${user.username} requesting to add comment to post ID: ${postId}`);
         return this.postsService.addComment(postId, user, createCommentDto.content);
     }

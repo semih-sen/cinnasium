@@ -112,6 +112,7 @@ import {
           // Eşsizlik ihlali olursa service katmanında veya listener'da handle etmek gerekebilir (örn: sonuna rastgele karakter ekleme)
         this.slug = slugify(this.title, {
           lower: true,
+        
           strict: true,
            remove: /[*+~.()'"!:@]/g
         });

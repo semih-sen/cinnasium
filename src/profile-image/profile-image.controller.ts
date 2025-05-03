@@ -1,4 +1,4 @@
-import { Controller, Get, Post, UseInterceptors, UploadedFile, Param, Res, Req, BadRequestException, UnauthorizedException, NotFoundException } from '@nestjs/common';
+import { Controller, Get, Post, UseInterceptors, UploadedFile, Param, Res, Req, BadRequestException, UnauthorizedException, NotFoundException, UseGuards } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ProfileImageService } from './profile-image.service';
 
@@ -9,6 +9,9 @@ import { diskStorage } from 'multer';
 import * as fs from 'fs';
 import * as path from 'path';
 import { UserService } from 'src/user/user.service';
+import { Roles } from 'src/auth/decorators/roles.decorator';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { UserRole } from 'src/user/entities/user.entity';
 
 
 @Controller('auth')
@@ -22,7 +25,7 @@ export class ProfileImageController {
   @UseInterceptors(FileInterceptor('file', {
     storage: diskStorage({
       destination: (req, file, cb) => {
-        const uploadPath = path.join(__dirname, '..', '..', 'profileImages');
+        const uploadPath = path.join(__dirname, '..', '..',"..", 'html',"avatars");
         if (!fs.existsSync(uploadPath)) {
           fs.mkdirSync(uploadPath, { recursive: true });
         }
@@ -58,7 +61,8 @@ export class ProfileImageController {
     return { message: 'Profile image uploaded and avatarUrl updated successfully', avatarUrl };
   }
 
-  @Public()
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN)
   @Get(':username/profileImage')
   async getProfileImage(@Param('username') username: string, @Res() res: Response) {
     const uploadPath = path.join(__dirname, '..', '..', 'profileImages');

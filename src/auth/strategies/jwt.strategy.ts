@@ -48,12 +48,12 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') { // 'jwt' is
 
     // Payload'dan gerekli bilgileri alıp request.user'a ekleyelim.
     // Parola gibi hassas bilgileri ASLA buraya ekleme!
-    const userDataForRequest = {
-        userId: user.id,
-        username: user.username,
-        role: user.role, // Kullanıcı rolü (admin, user vs.)
+    const {passwordHash, ...result} = user
+    const userDataForRequest = result;
+
+         // Kullanıcı rolü (admin, user vs.)
         // email: user.email // Gerekirse eklenebilir
-    };
+
      this.logger.debug(`JWT validation successful for user: ${payload.username}`);
 
     return userDataForRequest;
