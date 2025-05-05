@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Get, Param, Patch, Post, Put, Query, Request, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, ClassSerializerInterceptor, Controller, Get, Param, Patch, Post, Put, Query, Request, UseGuards, UseInterceptors } from '@nestjs/common';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { UserRole } from './entities/user.entity';
@@ -31,7 +31,7 @@ constructor(
 
     @Public() // Herkesin erişebilmesi için
     @Get('users/:username')
-    // @UseInterceptors(ClassSerializerInterceptor) // Eğer DTO'da @Expose kullandıysan bunu ekle
+    //@UseInterceptors(ClassSerializerInterceptor) // Eğer DTO'da @Expose kullandıysan bunu ekle
     async getUserProfile(@Param('username') username: string) /*: Promise<UserProfileDto>*/ {
      // this.logger.log(`Request received for user profile: ${username}`);
       return this.userService.findProfileByUsername(username);
