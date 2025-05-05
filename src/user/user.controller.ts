@@ -24,7 +24,7 @@ constructor(
     @Patch("users/me")
     async update(@Request() req, @Body() body){
 
-        return await this.userService.update(req.user._id, body)
+        return await this.userService.update(req.user.id, body)
 
     }
 
