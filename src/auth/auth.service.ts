@@ -39,7 +39,7 @@ export class AuthService {
             passwordHash: hashedPassword, // Hashlenmiş parolayı kullan
             role: UserRole.USER, // Varsayılan rol 'user'
             status: UserStatus.PENDING_VERIFICATION, // Varsayılan durum 'pending_verification'
-            avatarUrl: "default_avatar.png", // Varsayılan avatar URL'i (opsiyonel)
+            avatarUrl: "https://cinnasium.com/media/default_avatar.png", // Varsayılan avatar URL'i (opsiyonel)
            
         }
         const newUser = await this.usersService.createUser(userEntity);
