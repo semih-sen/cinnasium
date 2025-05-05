@@ -53,7 +53,7 @@ export class ProfileImageController {
 
     console.log(req.user);
     // Avatar URL oluştur
-    const avatarUrl = `${username}${ext}`;
+    const avatarUrl = `https://cinnasium.com/media/${username}${ext}`;
 
     // UserService kullanarak DB'de avatarUrl güncelle
     await this.userService.setProfileImage(req.user.userId, avatarUrl);

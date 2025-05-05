@@ -7,6 +7,7 @@ import { UserForCreateDto } from './entities/user_for_create.dto';
 import { VerificationService } from 'src/verification/verification.service';
 import { FindUsersQueryDto } from './dtos/find_users_query.dto';
 import { paginate, Pagination } from 'nestjs-typeorm-paginate';
+import { UserProfileDto } from './dtos/user_profile.dto';
 
 @Injectable()
 export class UserService {
@@ -38,6 +39,32 @@ export class UserService {
       );
     }
     return u;
+  }
+
+  async findProfileByUsername(username: string): Promise<UserProfileDto> {
+    this.logger.log(`Workspaceing profile for username: ${username}`);
+    const user = await this.findByUsername(username);
+
+    if (!user) {
+      this.logger.warn(`User profile not found for username: ${username}`);
+      throw new NotFoundException(`User '${username}' not found.`);
+    }
+
+    // Entity'den DTO'ya manuel mapping ve hassas verileri filtreleme
+    const userProfile: UserProfileDto = {
+      username: user.username,
+      avatarUrl: user.avatarUrl,
+      createdAt: user.createdAt,
+      lastLoginAt: user.lastLoginAt,
+      location: user.location,
+     
+      signature: user.signature,
+      // Bu alanların entity'de olması ve güncel olması lazım!
+      role: user.role, // Ham rolü döndürdük, frontend'de gösterim ayarlanabilir.
+    };
+
+    this.logger.log(`Profile found for username: ${username}`);
+    return userProfile;
   }
 
   async findById(id: string): Promise<User | null> {

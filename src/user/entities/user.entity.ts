@@ -61,6 +61,9 @@ import {
     @Column({ type: 'varchar', length: 100, nullable: true }) // Lokasyon (opsiyonel)
     location?: string;
   
+    @Column({ type: 'varchar', length: 100, nullable: true }) // İmza (opsiyonel)
+    signature?: string;
+
     @Column({ type: 'timestamptz', nullable: true }) // Son giriş tarihi (timezone ile birlikte)
     lastLoginAt?: Date;
   

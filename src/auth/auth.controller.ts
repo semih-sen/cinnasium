@@ -1,4 +1,4 @@
-import { Body, Post, Controller, Get, Param, Query, UseGuards, HttpCode, HttpStatus,Request, Logger } from '@nestjs/common';
+import { Body, Post, Controller, Get, Param, Query, UseGuards, HttpCode, HttpStatus,Request, Logger, Patch } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { UserForRegisterDto } from 'src/auth/dtos/user_for_register.dto';
 import { VerificationService } from 'src/verification/verification.service';
@@ -25,6 +25,8 @@ export class AuthController {
   async register(@Body() registerDto: UserForRegisterDto) {
     return await this.authService.register(registerDto);
   }
+
+  
 
   @Public() // Bu endpoint JWT gerektirmez
   @Get('verify_email')
