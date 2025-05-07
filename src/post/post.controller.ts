@@ -125,18 +125,15 @@ export class PostController {
 
     // --- Yorum Endpoint'leri ---
     @Post('posts/:id/comments') // POST /posts/{postId}/comments
-    @UseGuards(JwtAuthGuard)
+   
     @HttpCode(HttpStatus.CREATED)
    async  addComment(
         @Param('id', ParseUUIDPipe) postId: string,
         @Body() createCommentDto: CommentForCreateDto,
         @Request() req,
     ) {
-        const _user = req.user;
-        const user= await this.userService.findById(_user.userId)
-        if(!user){
-            throw new UnauthorizedException()
-        }
+        const user = req.user;
+       
         this.logger.log(`User ${user.username} requesting to add comment to post ID: ${postId}`);
         return this.postsService.addComment(postId, user, createCommentDto.content);
     }
